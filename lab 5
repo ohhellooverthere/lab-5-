@@ -1,0 +1,259 @@
+#include <iostream>
+#include <cmath>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+
+using namespace std;
+int const N = 100;
+int const n = 15;
+bool signed_val=false;
+
+void del_e(char *str){
+    for (int i=0;i<strlen(str); i++)
+        str[i]= str[i+1];
+    str[strlen(str)]=0;
+}
+
+void word_define(char *curr, char *str, int mode) {
+    int curr_length = 0;
+    for (int i = 0; i < n; i++) {
+        curr[i] = 0;
+    }
+    if (mode == 1){
+        while ((str[0] != '+') && (str[0] != '-') && (str[0] != ' ') &&
+               (str[0] != '(') && (str[0] != ')') && (str[0] != 0)) {
+            curr[curr_length] = str[0];
+            del_e(str);
+            curr_length++;
+        }
+    }
+    if (mode == 2){
+        if (str[0] == ' '){
+            curr[0] = ' ';
+            del_e(str);
+        }
+        while ((str[0] != ' ') && (str[0] != 0)) {
+            curr[curr_length] = str[0];
+            del_e(str);
+            curr_length++;
+        }
+    }
+
+}
+
+
+double charArrayToDouble(char *word){
+    double res = 0; bool point = false; int k = 1;
+    for (int i = ((word[0] == '+') || (word[0] == '-')) ? 1 : 0; i < strlen(word); i++){
+        if (point) {
+            res += (word[i] - '0')/pow(10, k);
+            k++;
+        }
+        else{
+            if (word[i] != '.') res = res * 10 + (word[i] - '0');
+            else point = true;
+        }
+    }
+    return (word[0] == '-') ? res * (-1) : res;
+}
+
+void perevod(char *str){
+    char stro[N], stacko[n], word[n];
+    int strLength = 0, stackoLength = 0, varNum=0;
+    bool flag;
+
+    struct var{
+    char name[n];
+    char val[n];
+    }vars[n];
+
+    strcpy(stro, str);
+    for (int i=0; i< N;i++)
+        str[i]=0;
+
+    while (strcmp(stro, "")!=0)//сравниваем 2 строчки
+    {
+       if ((stro[0]=='.')||(stro[0]==' ')||((stro[0]>='0')&&(stro[0]<='9'))){
+            str[strLength] = stro[0];
+            strLength++;
+            del_e(stro);
+            continue;
+        }
+        if ((stro[0]=='(')&&((stro[1]=='-')||(stro[1]=='+'))){
+            str[strLength]=stro[1];
+            strLength++;
+            del_e(stro);
+            del_e(stro);
+            signed_val=true;
+            continue;
+        }
+        if ((stro[0]==')')&&(signed_val)){
+            del_e(stro);
+            signed_val=false;
+            continue;
+        }
+        if (stro[0]=='('){
+            stacko[stackoLength]='(';
+            stackoLength++;
+            del_e(stro);
+            continue;
+        }
+        if (stro[0]==')'){
+            while (stacko[stackoLength-1]!='('){
+                str[strLength]=' ';
+                strLength++;
+                str[strLength] = stacko[stackoLength - 1];
+                strLength++;
+                stackoLength--;
+            }
+            stackoLength--;
+
+            if (stacko[stackoLength - 1] == 'l') {
+                str[strLength] = ' ';
+                str[strLength + 1] = 'l';
+                strLength += 2;
+                stackoLength--;
+            }
+
+            del_e(stro);
+            continue;
+        }
+        if ((stro[0]=='+')||(stro[0]=='-')){
+            while((stacko[stackoLength - 1] == '+') || (stacko[stackoLength - 1] == '-')){//если 5
+                str[strLength] = ' ';
+                str[strLength+1] = stacko[stackoLength - 1];
+                stackoLength--;
+                strLength += 2;
+            }
+
+            str[strLength] = ' ';
+            strLength++;
+            stacko[stackoLength]=stro[0];
+            stackoLength++;
+            del_e(stro);
+            continue;
+        }
+
+        str[strLength] = ' ';
+        strLength++;
+        word_define(word, stro, 1);
+
+        if (strcmp(word, "ln") == 0) {
+            stacko[stackoLength] = 'l';
+            stackoLength++;
+            continue;
+        }
+
+        flag= true;
+        for(int i = 0; i < strlen(word); i++){
+            if (!(((word[i]>='0')&&(word[i]<='9'))||((word[i]>='a')&&(word[i]<='z'))||((word[i]>='A')&&(word[i]<='Z')))){
+                flag = false;
+                break;
+            }
+        }
+        if(flag){
+            for (int i=0;i<varNum; i++)
+        {
+            if (strcmp (vars[i].name, word)==0){//операция сравневания
+                //strcat( str, vars[i].val);//добавляет в конец
+                for (int j = 0; j < strlen(vars[i].val); j++){
+                    str[strLength] = vars[i].val[j];
+                    strLength++;
+                }
+                flag=false;
+                break;
+            }
+        }
+        if (flag){
+            strcpy(vars[varNum].name,word);//копируем word в первое
+            cout<<vars[varNum].name<<"= ";
+            gets(vars[varNum].val);
+            //strcat(str, vars[varNum].val);
+            for (int i = 0; i < strlen(vars[varNum].val); i++){
+                str[strLength] = vars[varNum].val[i];
+                strLength++;
+            }
+            varNum++;
+            continue;
+        }
+
+        } else {
+            cout<<"ERROR\n";
+            exit(1);
+        }
+
+
+    }
+
+    while (stackoLength != 0){
+        str[strLength] = ' ';
+        strLength++;
+        str[strLength] = stacko[stackoLength -1];
+        strLength++;
+        stackoLength--;
+    }
+
+
+}
+
+
+double counter(char *str){
+    int stackLength = 0;
+    double numStack[n];
+    char word[n];
+    bool errs = false;
+
+    perevod(str);
+
+    while (strcmp(str, "") != 0) {
+        word_define(word, str, 2);
+
+        if (word[0] == ' '){
+            continue;
+        }
+
+        if ((strcmp(word, "l") == 0)&&(stackLength >= 1)&&(numStack[stackLength - 1] > 0)) {
+            numStack[stackLength - 1] = log(numStack[stackLength - 1]);
+            continue;
+        }
+
+        if ((((word[0] == '+') || (word[0] == '-')) && ((word[1] >= '0') && (word[1] <= '9'))) ||
+            ((word[0] >= '0') && (word[0] <= '9'))) {
+            numStack[stackLength] = charArrayToDouble(word);
+            stackLength++;
+            continue;
+        }
+
+        if ((word[0] == '+')&&(stackLength >= 2)){
+            numStack[stackLength - 2] += numStack[stackLength - 1];
+            stackLength--;
+            continue;
+        }
+
+        if ((word[0] == '-')&&(stackLength >= 2)){
+            numStack[stackLength - 2] -= numStack[stackLength - 1];
+            stackLength--;
+            continue;
+        }
+
+        cout << "ERROR\n";
+        exit(1);
+        break;
+
+    }
+    if (stackLength > 1){
+        cout << "ERROR\n";
+        exit(1);
+    }
+
+    return numStack[0];
+}
+
+int main(){
+    char str[N];
+    gets(str);
+    cout << counter(str);
+
+    return 0;
+}
